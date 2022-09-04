@@ -25,10 +25,54 @@ class MainViewModel : ViewModel() {
      * Flow 를 수집하는 각각의 Collector 들이
      * 데이터를 수집 할 때마다 새로운 데이터 스트림을 생성하므로
      * Collector 들은 각각의 개별적인 데이터 스트림에서 데이터를 수집한다.
+     * Collector가 없다면 작동하지 않는다.
+     * */
+
+    private val _stateFlow = MutableStateFlow(0)
+    val stateFlow = _stateFlow.asStateFlow()
+
+    private val _shareFlow = MutableSharedFlow<Int>(5)
+    val shareFlow = _shareFlow.asSharedFlow()
+
+    /**
+     * Hot Flow🔥 는
+     * Flow 를 수집하는 각각의 Collector 들이
+     * 데이터 스트림을 공유하여 동일한 데이터를 수집하며 구현에 따라
+     * Collector 유/무에 따라 시작되기도 하지만
+     * 기본적으로 Collector 가 없어도
+     * 데이터 제공자(Provider)는 스트림 데이터를 제공합니다.
      * */
 
     init {
-        collectFlow()
+//        collectFlow()
+        squareNumber(3)
+        viewModelScope.launch {
+            shareFlow.collect {
+                delay(2000L)
+                println("FIRST FLOW: The received number id $it")
+            }
+        }
+
+        viewModelScope.launch {
+            shareFlow.collect {
+                delay(3000L)
+                println("SECOND FLOW: The received number id $it")
+            }
+        }
+    }
+
+    fun incrementCounter() {
+        _stateFlow.value += 1
+    }
+
+    fun squareNumber(number: Int) {
+        viewModelScope.launch {
+            _shareFlow.emit(number * number)
+        }
+        /**
+         * 그냥 emit 할 경우 오류 발생
+         */
+//        _shareFlow.emit(number * number)
     }
 
 //    private fun collectFlow() {
