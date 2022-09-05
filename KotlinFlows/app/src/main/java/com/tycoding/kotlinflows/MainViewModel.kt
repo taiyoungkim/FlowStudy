@@ -6,10 +6,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class MainViewModel : ViewModel() {
+class MainViewModel(
+    private val dispatchers: DispatcherProvider
+) : ViewModel() {
 
     val countDownflow = flow<Int> {
-        val startingValue = 10
+        val startingValue = 5
         var currentValue = startingValue
         emit(startingValue)
         while (currentValue > 0) {
@@ -17,7 +19,7 @@ class MainViewModel : ViewModel() {
             currentValue--
             emit(currentValue)
         }
-    }
+    }.flowOn(dispatchers.main)
 
     /**
      * 위에 같은 flow는 cold flow라고 한다.
@@ -46,14 +48,14 @@ class MainViewModel : ViewModel() {
     init {
 //        collectFlow()
         squareNumber(3)
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             shareFlow.collect {
                 delay(2000L)
                 println("FIRST FLOW: The received number id $it")
             }
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             shareFlow.collect {
                 delay(3000L)
                 println("SECOND FLOW: The received number id $it")
@@ -66,7 +68,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun squareNumber(number: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             _shareFlow.emit(number * number)
         }
         /**
@@ -264,7 +266,7 @@ class MainViewModel : ViewModel() {
             delay(100L)
             emit("Desert")
         }
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.main) {
             flow1.onEach {
                 println("FLOW: $it is delivered")
             }
